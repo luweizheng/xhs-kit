@@ -2,7 +2,9 @@
 
 from typing import Optional
 from playwright.async_api import async_playwright, Browser, BrowserContext, Page, Playwright
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 from xhs_mcp.cookies import CookieManager
 

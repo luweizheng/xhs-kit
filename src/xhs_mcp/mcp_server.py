@@ -2,7 +2,9 @@
 
 from typing import Optional
 from mcp.server.fastmcp import FastMCP
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 from xhs_mcp.client import XhsClient
 

@@ -4,7 +4,9 @@ import asyncio
 import json
 from typing import Optional
 from playwright.async_api import Page
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 from xhs_mcp.browser import BrowserManager
 from xhs_mcp.interact import make_feed_detail_url

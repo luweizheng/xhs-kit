@@ -2,7 +2,9 @@
 
 import asyncio
 import click
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @click.group()

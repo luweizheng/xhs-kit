@@ -4,7 +4,9 @@ import json
 import os
 from pathlib import Path
 from typing import Optional
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_cookies_file_path() -> Path:

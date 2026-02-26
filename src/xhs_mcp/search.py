@@ -5,7 +5,9 @@ import json
 from urllib.parse import urlencode
 from typing import Optional
 from playwright.async_api import Page
-from loguru import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 from xhs_mcp.browser import BrowserManager
 from xhs_mcp.models import Feed, FeedsListResponse, FilterOption
