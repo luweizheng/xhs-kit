@@ -350,11 +350,14 @@ def like(feed_id: str, xsec_token: str, unlike: bool, headless: bool):
                 return
 
             if unlike:
-                await client.unlike(feed_id, xsec_token)
-                click.echo("✅ 已取消点赞")
+                result = await client.unlike(feed_id, xsec_token)
             else:
-                await client.like(feed_id, xsec_token)
-                click.echo("✅ 已点赞")
+                result = await client.like(feed_id, xsec_token)
+
+            if result.get("success"):
+                click.echo(f"✅ {result.get('message', '操作成功')}")
+            else:
+                click.echo(f"❌ {result.get('message', '操作失败')}")
 
     asyncio.run(_like())
 
@@ -375,11 +378,14 @@ def favorite(feed_id: str, xsec_token: str, unfavorite: bool, headless: bool):
                 return
 
             if unfavorite:
-                await client.unfavorite(feed_id, xsec_token)
-                click.echo("✅ 已取消收藏")
+                result = await client.unfavorite(feed_id, xsec_token)
             else:
-                await client.favorite(feed_id, xsec_token)
-                click.echo("✅ 已收藏")
+                result = await client.favorite(feed_id, xsec_token)
+
+            if result.get("success"):
+                click.echo(f"✅ {result.get('message', '操作成功')}")
+            else:
+                click.echo(f"❌ {result.get('message', '操作失败')}")
 
     asyncio.run(_favorite())
 
@@ -399,8 +405,11 @@ def comment_cmd(feed_id: str, xsec_token: str, content: str, headless: bool):
                 click.echo("❌ 请先登录")
                 return
 
-            await client.comment(feed_id, xsec_token, content)
-            click.echo("✅ 评论已发送")
+            result = await client.comment(feed_id, xsec_token, content)
+            if result.get("success"):
+                click.echo("✅ 评论已发送")
+            else:
+                click.echo(f"❌ 评论失败: {result.get('message')}")
 
     asyncio.run(_comment())
 
@@ -432,8 +441,11 @@ def reply_comment_cmd(
                 click.echo("❌ 请先登录")
                 return
 
-            await client.reply_comment(feed_id, xsec_token, content, comment_id, user_id)
-            click.echo("✅ 回复已发送")
+            result = await client.reply_comment(feed_id, xsec_token, content, comment_id, user_id)
+            if result.get("success"):
+                click.echo("✅ 回复已发送")
+            else:
+                click.echo(f"❌ 回复失败: {result.get('message')}")
 
     asyncio.run(_reply())
 

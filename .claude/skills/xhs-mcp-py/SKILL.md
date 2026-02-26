@@ -14,38 +14,59 @@ metadata: {"openclaw": {"emoji": "📕", "requires": {"bins": ["convert"]}}}
 # 使用 pip 安装
 pip install -U xhs-mcp-py
 
-# 安装 Playwright 浏览器
+# 安装 Playwright 浏览器（必需）
 playwright install chromium
 ```
 
-## 发布前必须先登录
+## ⚠️ 重要：所有操作必须先登录
 
-**重要：** 所有操作都需要先登录小红书账号。
+**小红书所有功能（发布、搜索、点赞、评论等）都需要先登录。**
 
-### 检查登录状态
+### 1. 检查登录状态
+
+执行任何操作前，先检查是否已登录：
 
 ```bash
-# 命令行
 xhs-mcp status
 ```
 
-命令会输出 `✅ 已登录` 或 `❌ 未登录`。
+- 输出 `✅ 已登录`：可以继续操作
+- 输出 `❌ 未登录`：必须先执行登录步骤
 
-如果显示未登录，需要先登录。
+### 2. 登录方式（带 fallback 逻辑）
 
-### 登录方式
+**推荐按以下顺序尝试登录：**
 
+**方式一：终端二维码（Claude Code / Open Code 推荐）**
 ```bash
-# 方式一：启动浏览器扫码登录（有浏览器的桌面环境）
+xhs-mcp login-qrcode --terminal
+```
+- ⚠️ 需要安装 zbar 库才能解析二维码：
+  - macOS: `brew install zbar`
+  - Ubuntu: `apt install libzbar0`
+- 如果未安装 zbar，会自动保存二维码图片并提示路径
+- 用户扫码后按回车完成登录
+- 如果终端显示失败，fallback 到方式二
+
+**方式二：浏览器扫码登录（有图形界面的环境）**
+```bash
 xhs-mcp login-browser
+```
+- 会弹出浏览器窗口供用户扫码
+- 如果无法弹出浏览器（如远程服务器无图形界面），会提示使用二维码方式
 
-
-
-
-# 方式二：保存二维码图片（OpenClaw 生成二维码图片，再发给用户）
-# 如果发送二维码有问题，方式一浏览器登录
+**方式三：保存二维码图片（OpenClaw 推荐）**
+```bash
 xhs-mcp login-qrcode --save /tmp/qrcode.png
 ```
+- 将二维码图片发送给用户扫码
+- 用户扫码后按回车完成登录
+
+**如果以上方式都失败：**
+- 提醒用户需要安装浏览器环境（Playwright + Chromium）
+- 或需要图形界面环境
+
+### 3. 登录参数说明
 
 `login-qrcode` 参数：
 
@@ -54,7 +75,7 @@ xhs-mcp login-qrcode --save /tmp/qrcode.png
 | `-s/--save` | string | ❌ | 保存二维码图片到指定路径 |
 | `--terminal/--no-terminal` | flag | ❌ | 是否在终端显示二维码（默认 terminal） |
 
-登录成功后，cookies 会保存到本地文件，后续操作会自动复用。
+登录成功后，cookies 会保存到本地文件，后续操作自动复用（有效期约 7-30 天）。
 
 ## 发布操作
 

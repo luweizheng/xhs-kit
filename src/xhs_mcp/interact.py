@@ -32,11 +32,18 @@ class InteractAction:
         page = await self.browser.new_page()
         url = make_feed_detail_url(feed_id, xsec_token)
         logger.debug(f"打开笔记详情页: {url}")
-        
+
         await page.goto(url)
         await page.wait_for_load_state("load")
         await asyncio.sleep(2)
-        
+
+        # 等待互动容器加载（可选，不阻塞）
+        try:
+            await page.wait_for_selector(".interact-container", timeout=5000)
+            logger.debug("互动容器已加载")
+        except Exception:
+            logger.debug("等待互动容器超时，继续执行")
+
         return page
     
     async def _get_interact_state(self, page: Page, feed_id: str) -> tuple[bool, bool]:
@@ -96,11 +103,22 @@ class LikeAction(InteractAction):
                 return {"feed_id": feed_id, "success": True, "message": "未点赞"}
             
             # 点击点赞按钮
-            await page.click(SELECTOR_LIKE_BUTTON)
+            like_btn = page.locator(SELECTOR_LIKE_BUTTON).first
+            await like_btn.wait_for(state="visible", timeout=15000)
+            await like_btn.click(timeout=15000)
             await asyncio.sleep(2)
-            
-            logger.info(f"笔记 {feed_id} {action_name}成功")
-            return {"feed_id": feed_id, "success": True, "message": f"{action_name}成功"}
+
+            # 验证操作结果
+            liked_after, _ = await self._get_interact_state(page, feed_id)
+            if target_liked and liked_after:
+                logger.info(f"笔记 {feed_id} {action_name}成功")
+                return {"feed_id": feed_id, "success": True, "message": f"{action_name}成功"}
+            elif not target_liked and not liked_after:
+                logger.info(f"笔记 {feed_id} {action_name}成功")
+                return {"feed_id": feed_id, "success": True, "message": f"{action_name}成功"}
+            else:
+                logger.warning(f"笔记 {feed_id} {action_name}可能失败，状态未改变")
+                return {"feed_id": feed_id, "success": False, "message": f"{action_name}可能失败，状态未改变"}
         finally:
             await page.close()
 
@@ -133,11 +151,22 @@ class FavoriteAction(InteractAction):
                 return {"feed_id": feed_id, "success": True, "message": "未收藏"}
             
             # 点击收藏按钮
-            await page.click(SELECTOR_COLLECT_BUTTON)
+            collect_btn = page.locator(SELECTOR_COLLECT_BUTTON).first
+            await collect_btn.wait_for(state="visible", timeout=15000)
+            await collect_btn.click(timeout=15000)
             await asyncio.sleep(2)
-            
-            logger.info(f"笔记 {feed_id} {action_name}成功")
-            return {"feed_id": feed_id, "success": True, "message": f"{action_name}成功"}
+
+            # 验证操作结果
+            _, collected_after = await self._get_interact_state(page, feed_id)
+            if target_collected and collected_after:
+                logger.info(f"笔记 {feed_id} {action_name}成功")
+                return {"feed_id": feed_id, "success": True, "message": f"{action_name}成功"}
+            elif not target_collected and not collected_after:
+                logger.info(f"笔记 {feed_id} {action_name}成功")
+                return {"feed_id": feed_id, "success": True, "message": f"{action_name}成功"}
+            else:
+                logger.warning(f"笔记 {feed_id} {action_name}可能失败，状态未改变")
+                return {"feed_id": feed_id, "success": False, "message": f"{action_name}可能失败，状态未改变"}
         finally:
             await page.close()
 
@@ -148,23 +177,30 @@ class CommentAction(InteractAction):
     async def post_comment(self, feed_id: str, xsec_token: str, content: str) -> dict:
         """发表评论"""
         page = await self._prepare_page(feed_id, xsec_token)
-        
+
         try:
+            # 先点击评论按钮展开输入框
+            comment_btn = page.locator(".interact-container .right .comment-wrapper").first
+            if await comment_btn.count() > 0:
+                await comment_btn.click(timeout=10000)
+                await asyncio.sleep(0.5)
+
             # 点击评论输入框
-            input_box = page.locator("div.input-box div.content-edit span")
-            await input_box.click()
+            input_box = page.locator("div.input-box div.content-edit span").first
+            await input_box.wait_for(state="visible", timeout=10000)
+            await input_box.click(force=True, timeout=10000)
             await asyncio.sleep(0.5)
-            
+
             # 输入评论内容
-            content_input = page.locator("div.input-box div.content-edit p.content-input")
+            content_input = page.locator("div.input-box div.content-edit p.content-input").first
             await content_input.fill(content)
-            await asyncio.sleep(1)
-            
+            await asyncio.sleep(0.5)
+
             # 点击提交按钮
-            submit_btn = page.locator("div.bottom button.submit")
-            await submit_btn.click()
-            await asyncio.sleep(2)
-            
+            submit_btn = page.locator("div.bottom button.submit").first
+            await submit_btn.click(force=True, timeout=10000)
+            await asyncio.sleep(1)
+
             logger.info(f"评论发表成功: {feed_id}")
             return {"feed_id": feed_id, "success": True, "message": "评论发表成功"}
         except Exception as e:
