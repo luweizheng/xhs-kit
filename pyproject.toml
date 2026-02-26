@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xhs-mcp"
+version = "0.1.0"
+description = "小红书 MCP 工具 - 支持登录、发布图文/视频、点赞评论等功能"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "luweizheng", email = "luweizheng36@hotmail.com" }
+]
+keywords = ["xiaohongshu", "mcp", "automation", "playwright"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "playwright>=1.40.0",
+    "mcp>=1.0.0",
+    "pydantic>=2.0",
+    "click>=8.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+xhs-mcp = "xhs_mcp.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/luweizheng/xhs-mcp-py"
+Repository = "https://github.com/luweizheng/xhs-mcp-py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xhs_mcp"]
+
+[tool.hatch.build.targets.editable]
+packages = ["src/xhs_mcp"]
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
