@@ -11,6 +11,7 @@ from xhs_mcp.feeds import FeedsListAction
 from xhs_mcp.feed_detail import FeedDetailAction
 from xhs_mcp.user_profile import UserProfileAction
 from xhs_mcp.interact import LikeAction, FavoriteAction, CommentAction
+from xhs_mcp.text_card import TextCardAction
 from xhs_mcp.models import (
     LoginStatus, 
     LoginQrcodeResponse,
@@ -45,6 +46,7 @@ class XhsClient:
         self._like_action = LikeAction(self.browser)
         self._favorite_action = FavoriteAction(self.browser)
         self._comment_action = CommentAction(self.browser)
+        self._text_card_action = TextCardAction(self.browser)
     
     async def check_login_status(self) -> LoginStatus:
         """检查登录状态"""
@@ -187,6 +189,34 @@ class XhsClient:
             content: 评论内容
         """
         return await self._comment_action.post_comment(feed_id, xsec_token, content)
+    
+    async def publish_text_card(
+        self,
+        cover_text: str,
+        pages: Optional[list[str]] = None,
+        style: str = "基础",
+        title: str = "",
+        content: str = "",
+        tags: Optional[list[str]] = None
+    ) -> PublishResponse:
+        """发布文字配图笔记
+        
+        Args:
+            cover_text: 封面文字
+            pages: 正文页列表（最多17页）
+            style: 卡片样式（基础、边框、备忘、手写、便签、涂写、简约、光影、几何）
+            title: 笔记标题
+            content: 笔记正文描述
+            tags: 话题标签列表
+        """
+        return await self._text_card_action.publish_text_card(
+            cover_text=cover_text,
+            pages=pages,
+            style=style,
+            title=title,
+            content=content,
+            tags=tags
+        )
     
     async def close(self) -> None:
         """关闭客户端，释放资源"""

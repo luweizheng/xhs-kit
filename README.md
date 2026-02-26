@@ -8,7 +8,7 @@
 ## 特性
 
 - 🔐 **扫码登录** - 支持二维码扫码登录，自动保存 cookies
-- 📝 **发布内容** - 支持发布图文、视频，支持定时发布
+- 📝 **发布内容** - 支持发布图文、视频、文字配图，支持定时发布
 - 🔍 **搜索内容** - 支持关键词搜索，支持筛选条件
 - ❤️ **互动功能** - 支持点赞、收藏、评论
 - 📊 **数据获取** - 获取首页推荐、笔记详情、用户主页
@@ -39,6 +39,9 @@ xhs-mcp publish -t "标题" -c "正文内容" -i image1.jpg -i image2.jpg --tag 
 
 # 发布视频
 xhs-mcp publish-video -t "标题" -c "正文内容" -v video.mp4
+
+# 发布文字配图（将文字生成为卡片图片）
+xhs-mcp publish-text-card -c "封面文字" -p "第一页内容" -p "第二页内容" -s "基础" -t "笔记标题"
 
 # 搜索内容
 xhs-mcp search -k "关键词"
@@ -106,6 +109,7 @@ asyncio.run(main())
 | `like_feed` | 点赞/取消点赞 |
 | `favorite_feed` | 收藏/取消收藏 |
 | `post_comment` | 发表评论 |
+| `publish_text_card` | 发布文字配图笔记 |
 
 ## MCP 客户端配置
 
@@ -141,11 +145,11 @@ asyncio.run(main())
 
 配置完成后重启 Claude Desktop。
 
-### Claude Code (claude.ai/code)
+### Claude Code
 
 ```bash
 # 添加 MCP 服务
-claude mcp add xiaohongshu -- xhs-mcp serve
+
 
 # 查看已添加的 MCP
 claude mcp list

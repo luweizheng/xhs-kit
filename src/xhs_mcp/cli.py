@@ -140,6 +140,38 @@ def search(keyword: str, headless: bool):
 
 
 @main.command()
+@click.option("--cover", "-c", required=True, help="封面文字")
+@click.option("--page", "-p", multiple=True, help="正文页文字（可多次指定，最多17页）")
+@click.option("--style", "-s", default="基础", help="卡片样式：基础|边框|备忘|手写|便签|涂写|简约|光影|几何")
+@click.option("--title", "-t", default="", help="笔记标题")
+@click.option("--content", default="", help="笔记正文描述")
+@click.option("--tag", multiple=True, help="标签（可多次指定）")
+@click.option("--headless/--no-headless", default=True, help="是否无头模式")
+def publish_text_card(cover: str, page: tuple, style: str, title: str, content: str, tag: tuple, headless: bool):
+    """发布文字配图笔记"""
+    from xhs_mcp.client import XhsClient
+    
+    async def _publish():
+        async with XhsClient(headless=headless) as client:
+            if not await client.is_logged_in():
+                click.echo("❌ 请先登录")
+                return
+            
+            click.echo(f"正在发布文字配图: {cover[:20]}...")
+            result = await client.publish_text_card(
+                cover_text=cover,
+                pages=list(page) if page else None,
+                style=style,
+                title=title,
+                content=content,
+                tags=list(tag) if tag else None
+            )
+            click.echo(f"✅ {result.status}: {result.message}")
+    
+    asyncio.run(_publish())
+
+
+@main.command()
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def serve(headless: bool):
     """启动 MCP 服务（stdio 模式）"""

@@ -240,6 +240,40 @@ async def post_comment(feed_id: str, xsec_token: str, content: str) -> dict:
     return await client.comment(feed_id, xsec_token, content)
 
 
+@mcp.tool()
+async def publish_text_card(
+    cover_text: str,
+    pages: Optional[list[str]] = None,
+    style: str = "基础",
+    title: str = "",
+    content: str = "",
+    tags: Optional[list[str]] = None
+) -> dict:
+    """发布文字配图笔记（将文字生成为卡片图片）
+    
+    Args:
+        cover_text: 封面文字内容
+        pages: 正文页列表（最多17页），每页一段文字
+        style: 卡片样式，可选：基础|边框|备忘|手写|便签|涂写|简约|光影|几何
+        title: 笔记标题
+        content: 笔记正文描述
+        tags: 话题标签列表
+    """
+    client = get_client()
+    result = await client.publish_text_card(
+        cover_text=cover_text,
+        pages=pages,
+        style=style,
+        title=title,
+        content=content,
+        tags=tags
+    )
+    return {
+        "status": result.status,
+        "message": result.message
+    }
+
+
 def init_server(headless: bool = True):
     """初始化服务器"""
     global _headless

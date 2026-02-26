@@ -38,11 +38,12 @@ class PublishVideoContent(BaseModel):
 
 class PublishResponse(BaseModel):
     """发布响应"""
-    title: str
-    content: str
+    title: Optional[str] = None
+    content: Optional[str] = None
     images: Optional[int] = None
     video: Optional[str] = None
     status: str
+    message: Optional[str] = None
     post_id: Optional[str] = None
 
 
