@@ -52,8 +52,8 @@ class TextCardAction:
             cover_text: 封面文字
             pages: 正文页列表（最多17页）
             style: 卡片样式（基础、边框、备忘、手写、便签、涂写、简约、光影、几何）
-            title: 笔记标题
-            content: 笔记正文描述
+            title: 文字标题
+            content: 文字正文内容
             tags: 话题标签列表
         
         Returns:
@@ -137,75 +137,71 @@ class TextCardAction:
             logger.info("填写标题和正文...")
             await asyncio.sleep(2)
             
-            # 填写标题 - 尝试多种选择器
+            # 填写标题 - 使用与 publish.py 相同的选择器
             if title:
                 title_selectors = [
+                    "div.d-input input",
                     "input[placeholder*='标题']",
                     "[class*='title'] input",
                     "input[type='text']"
                 ]
+                title_filled = False
                 for sel in title_selectors:
                     title_input = await page.query_selector(sel)
                     if title_input:
-                        await title_input.fill(title)
-                        logger.info(f"标题已填写，使用选择器: {sel}")
-                        break
+                        try:
+                            await title_input.fill(title)
+                            logger.info(f"标题已填写，使用选择器: {sel}")
+                            title_filled = True
+                            break
+                        except Exception as e:
+                            logger.warning(f"使用选择器 {sel} 填写标题失败: {e}")
+                            continue
+                
+                if not title_filled:
+                    logger.warning("未能找到标题输入框")
             
-            # 填写正文
+            # 填写正文 - 使用与 publish.py 相同的选择器
             if content:
                 content_selectors = [
+                    "div.ql-editor",
+                    "[role='textbox']",
                     "textarea[placeholder*='正文']",
                     "[class*='content'] textarea",
                     "[class*='desc'] textarea"
                 ]
+                content_filled = False
                 for sel in content_selectors:
                     content_input = await page.query_selector(sel)
                     if content_input:
-                        await content_input.fill(content)
-                        logger.info(f"正文已填写，使用选择器: {sel}")
-                        break
-            
-            # 10. 添加标签 - 点击推荐标签
-            if tags:
-                logger.info(f"添加标签: {tags}")
-                for tag in tags:
-                    # 使用 JavaScript 查找并点击包含标签文字的元素
-                    tag_text = tag if tag.startswith('#') else f"#{tag}"
-                    clicked = await page.evaluate(f'''() => {{
-                        const elements = document.querySelectorAll('*');
-                        for (const el of elements) {{
-                            if (el.textContent && el.textContent.trim() === '{tag_text}' && el.children.length === 0) {{
-                                el.click();
-                                return true;
-                            }}
-                        }}
-                        // 如果没找到精确匹配，尝试包含匹配
-                        for (const el of elements) {{
-                            if (el.textContent && el.textContent.includes('{tag}') && el.textContent.startsWith('#') && el.children.length === 0) {{
-                                el.click();
-                                return true;
-                            }}
+                        try:
+                            # ql-editor 需要先点击再填写
+                            await content_input.click()
+                            await asyncio.sleep(0.3)
+                            await content_input.fill(content)
+                            logger.info(f"正文已填写，使用选择器: {sel}")
+                            content_filled = True
+                            break
+                        except Exception as e:
+                            logger.warning(f"使用选择器 {sel} 填写正文失败: {e}")
+                            continue
+                
+                if not content_filled:
+                    logger.warning("未能找到正文输入框，尝试使用 JavaScript 填写")
+                    # 尝试使用 JavaScript 直接设置内容
+                    await page.evaluate(f'''() => {{
+                        const editor = document.querySelector('div.ql-editor');
+                        if (editor) {{
+                            editor.innerHTML = '<p>{content}</p>';
+                            return true;
                         }}
                         return false;
                     }}''')
-                    
-                    if clicked:
-                        logger.info(f"已添加标签: {tag}")
-                        await asyncio.sleep(0.5)
-                    else:
-                        # 尝试点击"# 话题"按钮搜索
-                        topic_btn = await page.query_selector("text=# 话题")
-                        if topic_btn:
-                            await topic_btn.click()
-                            await asyncio.sleep(0.5)
-                            
-                            # 在搜索框输入标签
-                            tag_input = await page.query_selector("input")
-                            if tag_input:
-                                await tag_input.fill(tag)
-                                await asyncio.sleep(1)
-                                await tag_input.press("Enter")
-                                await asyncio.sleep(0.5)
+            
+            # 10. 添加标签（暂时跳过，标签功能有问题）
+            # if tags:
+            #     logger.info(f"添加标签: {tags}")
+            #     # TODO: 修复标签功能
             
             # 11. 点击发布
             logger.info("点击发布按钮...")

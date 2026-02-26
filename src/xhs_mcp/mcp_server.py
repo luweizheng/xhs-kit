@@ -1,5 +1,8 @@
 """MCP 服务端"""
 
+import base64
+import io
+import sys
 from typing import Optional
 from mcp.server.fastmcp import FastMCP
 import logging
@@ -7,6 +10,83 @@ import logging
 logger = logging.getLogger(__name__)
 
 from xhs_mcp.client import XhsClient
+
+
+def print_qrcode_to_terminal(img_base64: str) -> str:
+    """将 base64 图片解析为二维码并打印到终端
+    
+    Returns:
+        str: 二维码内容的 URL，如果解析失败则返回空字符串
+    """
+    try:
+        from PIL import Image
+        from pyzbar.pyzbar import decode
+        
+        # 解析 base64 图片
+        if img_base64.startswith('data:'):
+            # 去掉 data:image/xxx;base64, 前缀
+            img_base64 = img_base64.split(',', 1)[1]
+        
+        img_data = base64.b64decode(img_base64)
+        img = Image.open(io.BytesIO(img_data))
+        
+        # 解码二维码
+        decoded = decode(img)
+        if not decoded:
+            logger.warning("无法解析二维码内容")
+            return ""
+        
+        qr_data = decoded[0].data.decode('utf-8')
+        
+        # 生成终端可显示的二维码
+        import qrcode
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=1,
+            border=2,
+        )
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        
+        # 获取二维码矩阵
+        matrix = qr.get_matrix()
+        
+        # 打印到 stderr（不干扰 MCP 通信）
+        print("\n" + "="*60, file=sys.stderr)
+        print("请使用小红书 App 扫描以下二维码登录:", file=sys.stderr)
+        print("="*60, file=sys.stderr)
+        
+        # 使用 Unicode 块字符打印二维码（更清晰）
+        # 每两行合并为一行，使用 ▀ ▄ █ 字符
+        for row_idx in range(0, len(matrix), 2):
+            line = ""
+            for col_idx in range(len(matrix[0])):
+                top = matrix[row_idx][col_idx] if row_idx < len(matrix) else False
+                bottom = matrix[row_idx + 1][col_idx] if row_idx + 1 < len(matrix) else False
+                
+                if top and bottom:
+                    line += "█"
+                elif top and not bottom:
+                    line += "▀"
+                elif not top and bottom:
+                    line += "▄"
+                else:
+                    line += " "
+            print(line, file=sys.stderr)
+        
+        print("="*60, file=sys.stderr)
+        print(f"二维码链接: {qr_data}", file=sys.stderr)
+        print("="*60 + "\n", file=sys.stderr)
+        sys.stderr.flush()
+        
+        return qr_data
+    except ImportError as e:
+        logger.warning(f"缺少依赖库: {e}，无法打印终端二维码")
+        return ""
+    except Exception as e:
+        logger.warning(f"解析二维码失败: {e}")
+        return ""
 
 
 # 创建 MCP Server
@@ -38,32 +118,45 @@ async def check_login_status() -> dict:
 
 @mcp.tool()
 async def login_with_browser() -> dict:
-    """小红书扫码登录（会启动浏览器窗口）。
+    """浏览器扫码登录（会弹出浏览器窗口）。
     
     首次使用或登录过期时必须调用此工具。
-    会启动浏览器窗口显示二维码，用户需要用小红书 App 扫码登录。
+    会打开浏览器窗口显示二维码，用户需要用小红书 App 扫码登录。
     登录成功后 cookies 会自动保存到本地文件，后续调用其他工具时会自动加载 cookies，无需再次登录。
     
     Cookies 有效期通常为 7-30 天，过期后需要重新登录。
     
+    注意：在 Claude Code 中，推荐使用命令行登录：xhs-mcp login-qrcode --terminal
+    
     Returns:
-        dict: 包含 is_logged_in（是否已登录）、img（二维码图片 Base64）、timeout（超时秒数）
+        dict: 包含 is_logged_in（是否已登录）、message（提示信息）
     """
-    client = get_client()
-    result = await client.get_login_qrcode()
-    return {
-        "is_logged_in": result.is_logged_in,
-        "img": result.img,
-        "timeout": result.timeout,
-        "message": "请使用小红书 App 扫描二维码登录" if not result.is_logged_in else "已登录，cookies 已保存"
-    }
+    # 使用非 headless 模式的客户端
+    from xhs_mcp.client import XhsClient
+    
+    async with XhsClient(headless=False) as client:
+        # 检查是否已登录
+        if await client.is_logged_in():
+            return {
+                "is_logged_in": True,
+                "message": "已登录，无需重复登录"
+            }
+        
+        # 交互式登录（会弹出浏览器窗口）
+        success = await client.login()
+        
+        return {
+            "is_logged_in": success,
+            "message": "登录成功，cookies 已保存" if success else "登录失败或超时，请重试"
+        }
 
 
 @mcp.tool()
 async def get_login_qrcode() -> dict:
-    """获取登录二维码（返回 Base64 图片和超时时间）。
+    """获取登录二维码（返回 Base64 图片）。
     
-    注意：推荐使用 login_with_browser 工具，功能相同但有更详细的说明。
+    返回二维码图片的 Base64 编码，需要配合轮询 check_login_status 使用。
+    推荐使用 login_with_browser 工具或命令行 xhs-mcp login-qrcode --terminal 登录。
     """
     client = get_client()
     result = await client.get_login_qrcode()
@@ -93,8 +186,8 @@ async def publish_content(
     """发布小红书图文内容
     
     Args:
-        title: 内容标题（小红书限制：最多20个中文字或英文单词）
-        content: 正文内容，不包含以#开头的标签内容
+        title: 文字标题（小红书限制：最多20个中文字或英文单词）
+        content: 文字正文内容，不包含以#开头的标签内容
         images: 图片路径列表（至少需要1张图片），支持本地绝对路径
         tags: 话题标签列表（可选），如 ["美食", "旅行", "生活"]
         schedule_at: 定时发布时间（可选），ISO8601格式如 2024-01-20T10:30:00+08:00
@@ -134,8 +227,8 @@ async def publish_with_video(
     """发布小红书视频内容（仅支持本地单个视频文件）
     
     Args:
-        title: 内容标题（小红书限制：最多20个中文字或英文单词）
-        content: 正文内容，不包含以#开头的标签内容
+        title: 文字标题（小红书限制：最多20个中文字或英文单词）
+        content: 文字正文内容，不包含以#开头的标签内容
         video: 本地视频绝对路径（仅支持单个视频文件）
         tags: 话题标签列表（可选），如 ["美食", "旅行", "生活"]
         schedule_at: 定时发布时间（可选），ISO8601格式如 2024-01-20T10:30:00+08:00
@@ -349,8 +442,8 @@ async def publish_text_card(
         cover_text: 封面文字内容
         pages: 正文页列表（最多17页），每页一段文字
         style: 卡片样式，可选：基础|边框|备忘|手写|便签|涂写|简约|光影|几何
-        title: 笔记标题
-        content: 笔记正文描述
+        title: 文字标题
+        content: 文字正文内容
         tags: 话题标签列表
     """
     client = get_client()

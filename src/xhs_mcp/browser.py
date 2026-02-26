@@ -24,9 +24,13 @@ class BrowserManager:
         if self._browser is None:
             self._playwright = await async_playwright().start()
             
+            # 使用 new headless 模式，在 macOS 上不会显示 Dock 图标
             launch_options = {
                 "headless": self.headless,
             }
+            # Chromium 新版 headless 模式参数
+            if self.headless:
+                launch_options["args"] = ["--headless=new"]
             if self.bin_path:
                 launch_options["executable_path"] = self.bin_path
             

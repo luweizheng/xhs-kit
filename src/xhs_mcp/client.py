@@ -87,8 +87,8 @@ class XhsClient:
         """发布图文内容
         
         Args:
-            title: 标题（最多20个字）
-            content: 正文内容
+            title: 文字标题（最多20个字）
+            content: 文字正文内容
             images: 图片路径列表（至少1张）
             tags: 标签列表（可选，最多10个）
             schedule_at: 定时发布时间（可选，1小时至14天内）
@@ -113,8 +113,8 @@ class XhsClient:
         """发布视频内容
         
         Args:
-            title: 标题（最多20个字）
-            content: 正文内容
+            title: 文字标题（最多20个字）
+            content: 文字正文内容
             video: 视频文件路径
             tags: 标签列表（可选，最多10个）
             schedule_at: 定时发布时间（可选，1小时至14天内）

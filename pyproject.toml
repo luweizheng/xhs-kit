@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xhs-mcp-py"
-version = "0.1.1"
+version = "0.1.2"
 description = "小红书 MCP 工具 - 支持登录、发布图文/视频、点赞评论等功能"
 readme = "README.md"
 license = "MIT"
@@ -28,6 +28,9 @@ dependencies = [
     "mcp>=1.0.0",
     "pydantic>=2.0",
     "click>=8.0",
+    "pillow>=10.0.0",
+    "pyzbar>=0.1.9",
+    "qrcode>=7.0",
 ]
 
 [project.optional-dependencies]

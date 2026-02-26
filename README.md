@@ -28,7 +28,7 @@ playwright install chromium
 
 ### 使用流程
 
-1. **首次使用必须先登录**：运行 `xhs-mcp login --no-headless` 扫码登录
+1. **首次使用必须先登录**：运行 `xhs-mcp login-browser` 或 `xhs-mcp login-qrcode` 扫码登录
 2. **检查登录状态**：运行 `xhs-mcp status` 确认已登录
 3. **执行操作**：登录成功后即可使用各种功能
 4. **Cookies 有效期**：约 7-30 天，过期后需重新登录
@@ -100,20 +100,46 @@ claude mcp remove xhs-mcp
 xhs-mcp serve
 ```
 
+## 发布
+
+### 文字配图
+
+```
+  封面文字：我开源了个小红书自动发布工具：xhs-mcp-py
+
+  文字标题：我开源了个小红书自动发布工具：xhs-mcp-py
+
+  文字正文内容：
+  我开源了个小红书自动发布工具：xhs-mcp-py。
+
+  基于 Python，轻松兼容 Windows、Mac、Linux。
+  支持 Claude Code 和 OpenClaw，还能发布文字配图笔记。
+  核心原理：模拟浏览器登录。
+
+  项目地址：https://github.com/luweizheng/xhs-mcp-py
+
+  欢迎来玩！
+```
+
 ## 命令行使用
 
 ```bash
-# 1. 扫码登录（首次使用必须执行，会打开浏览器窗口）
-xhs-mcp login --no-headless
+# 1. 扫码登录（首次使用必须执行）
+# 方式一：打开浏览器窗口扫码
+xhs-mcp login-browser
+# 方式二：在终端显示二维码，在 Claude Code、Open Code 中推荐使用这种
+xhs-mcp login-qrcode --terminal
+# 方式三：保存二维码图片，在 OpenClaw 中将 qrcode.png 发送给 Channel 中的用户
+xhs-mcp login-qrcode --save qrcode.png
 
 # 2. 检查登录状态（确认已登录后再执行其他操作）
 xhs-mcp status
 
 # 发布图文
-xhs-mcp publish -t "标题" -c "正文内容" -i image1.jpg -i image2.jpg --tag 旅行 --tag 美食
+xhs-mcp publish -t "标题" -c "文字正文内容" -i image1.jpg -i image2.jpg --tag 旅行 --tag 美食
 
 # 发布视频
-xhs-mcp publish-video -t "标题" -c "正文内容" -v video.mp4
+xhs-mcp publish-video -t "标题" -c "文字正文内容" -v video.mp4
 
 # 发布文字配图（将文字生成为卡片图片）
 xhs-mcp publish-text-card -c "封面文字" -p "第一页内容" -p "第二页内容" -s "基础" -t "笔记标题"
@@ -132,11 +158,12 @@ xhs-mcp serve
 
 | 工具名 | 说明 |
 |--------|------|
-| `login_with_browser` | **首次使用必须调用** - 启动浏览器扫码登录，cookies 保存后可复用 |
+| `login_with_browser` | **浏览器登录** - 弹出浏览器窗口扫码登录，cookies 保存后可复用 |
 | `check_login_status` | 检查登录状态 |
-| `get_login_qrcode` | 获取登录二维码（同 login_with_browser） |
+| `get_login_qrcode` | 获取登录二维码（返回 Base64 图片，需配合轮询使用）|
 | `delete_cookies` | 删除 cookies，重置登录 |
 | `publish_content` | 发布图文内容 |
+| `publish_text_card` | 发布文字配图笔记 |
 | `publish_with_video` | 发布视频内容 |
 | `list_feeds` | 获取首页推荐列表 |
 | `search_feeds` | 搜索内容 |
@@ -146,29 +173,222 @@ xhs-mcp serve
 | `favorite_feed` | 收藏/取消收藏 |
 | `post_comment` | 发表评论 |
 | `reply_comment` | 回复评论 |
-| `publish_text_card` | 发布文字配图笔记 |
 
 ## API 参考
 
-### XhsClient
+> 💡 **提示：** 点击下方功能标题可展开查看详细说明
 
-| 方法 | 说明 |
-|------|------|
-| `login()` | 交互式扫码登录 |
-| `is_logged_in()` | 检查是否已登录 |
-| `delete_cookies()` | 删除 cookies |
-| `publish(title, content, images, tags)` | 发布图文 |
-| `publish_video(title, content, video, tags)` | 发布视频 |
-| `search(keyword, filters)` | 搜索内容 |
-| `get_feeds()` | 获取首页推荐 |
-| `get_feed_detail(feed_id, xsec_token)` | 获取笔记详情 |
-| `get_user_profile(user_id, xsec_token)` | 获取用户主页 |
-| `like(feed_id, xsec_token)` | 点赞 |
-| `unlike(feed_id, xsec_token)` | 取消点赞 |
-| `favorite(feed_id, xsec_token)` | 收藏 |
-| `unfavorite(feed_id, xsec_token)` | 取消收藏 |
-| `comment(feed_id, xsec_token, content)` | 发表评论 |
-| `reply_comment(feed_id, xsec_token, content, comment_id, user_id)` | 回复评论 |
+<summary><b>1. 登录和检查登录状态</b></summary>
+
+第一步必须，小红书需要进行登录。可以检查当前登录状态。
+
+**MCP 工具：**
+- `login_with_browser` - 启动浏览器扫码登录，cookies 保存后可复用
+- `check_login_status` - 检查当前登录状态
+- `delete_cookies` - 删除 cookies，重置登录状态
+
+**命令行：**
+```bash
+# 浏览器扫码登录
+xhs-mcp login-browser
+
+# 终端二维码登录，在 Claude Code、Open Code 中推荐使用这种
+xhs-mcp login-qrcode --terminal
+
+# 检查登录状态
+xhs-mcp status
+
+# 退出登录
+xhs-mcp logout
+```
+
+<details>
+<summary><b>2. 发布图文内容</b></summary>
+
+支持发布图文内容到小红书，包括标题、内容描述和图片。
+
+**MCP 工具：** `publish_content`
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `title` | string | ✅ | 文章标题（最多20个字） |
+| `content` | string | ✅ | 文字正文内容 |
+| `images` | list[string] | ✅ | 图片路径列表（本地绝对路径） |
+| `tags` | list[string] | ❌ | 话题标签列表 |
+| `schedule_at` | string | ❌ | 定时发布时间（ISO8601格式） |
+
+**命令行：**
+```bash
+xhs-mcp publish -t "标题" -c "文字正文内容" -i image1.jpg -i image2.jpg --tag 旅行 --tag 美食
+```
+
+</details>
+
+<details>
+<summary><b>3. 发布视频内容</b></summary>
+
+支持发布视频内容到小红书，包括标题、内容描述和本地视频文件。
+
+**MCP 工具：** `publish_with_video`
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `title` | string | ✅ | 文章标题（最多20个字） |
+| `content` | string | ✅ | 文字正文内容 |
+| `video` | string | ✅ | 本地视频绝对路径 |
+| `tags` | list[string] | ❌ | 话题标签列表 |
+| `schedule_at` | string | ❌ | 定时发布时间（ISO8601格式） |
+
+**命令行：**
+```bash
+xhs-mcp publish-video -t "标题" -c "文字正文内容" -v video.mp4
+```
+
+</details>
+
+<details>
+<summary><b>4. 发布文字配图</b></summary>
+
+将文字生成为卡片图片并发布，支持多页和多种样式。
+
+**MCP 工具：** `publish_text_card`
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `cover_text` | string | ✅ | 封面文字 |
+| `pages` | list[string] | ❌ | 正文页列表（最多17页） |
+| `style` | string | ❌ | 卡片样式：基础/边框/备忘/手写/便签/涂写/简约/光影/几何 |
+| `title` | string | ❌ | 文章标题 |
+| `content` | string | ❌ | 文字正文内容 |
+| `tags` | list[string] | ❌ | 话题标签列表 |
+
+**命令行：**
+```bash
+xhs-mcp publish-text-card -c "封面文字" -p "第一页" -p "第二页" -s "基础" -t "笔记标题"
+```
+
+</details>
+
+<details>
+<summary><b>5. 搜索内容</b></summary>
+
+根据关键词搜索小红书内容，支持多维度筛选。
+
+**MCP 工具：** `search_feeds`
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `keyword` | string | ✅ | 搜索关键词 |
+| `sort_by` | string | ❌ | 排序：综合/最新/最多点赞/最多评论/最多收藏 |
+| `note_type` | string | ❌ | 类型：不限/视频/图文 |
+| `publish_time` | string | ❌ | 时间：不限/一天内/一周内/半年内 |
+| `search_scope` | string | ❌ | 范围：不限/已看过/未看过/已关注 |
+| `location` | string | ❌ | 位置：不限/同城/附近 |
+
+**命令行：**
+```bash
+xhs-mcp search -k "关键词"
+```
+
+</details>
+
+<details>
+<summary><b>6. 获取推荐列表</b></summary>
+
+获取小红书首页推荐内容列表。
+
+**MCP 工具：** `list_feeds`
+
+**参数：** 无
+
+</details>
+
+<details>
+<summary><b>7. 获取笔记详情</b></summary>
+
+获取小红书笔记的完整详情，包括内容、互动数据和评论。
+
+**MCP 工具：** `get_feed_detail`
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `feed_id` | string | ✅ | 笔记 ID（从搜索或推荐列表获取） |
+| `xsec_token` | string | ✅ | 访问令牌（从搜索或推荐列表获取） |
+| `load_comments` | bool | ❌ | 是否加载评论（基础模式，前10条） |
+| `load_all_comments` | bool | ❌ | 是否加载全部评论（滚动加载） |
+| `limit` | int | ❌ | 限制一级评论数量（默认20） |
+| `click_more_replies` | bool | ❌ | 是否展开二级回复 |
+| `reply_limit` | int | ❌ | 跳过回复数过多的评论（默认10） |
+| `scroll_speed` | string | ❌ | 滚动速度：slow/normal/fast |
+
+</details>
+
+<details>
+<summary><b>8. 获取用户主页</b></summary>
+
+获取小红书用户的个人主页信息。
+
+**MCP 工具：** `get_user_profile`
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `user_id` | string | ✅ | 用户 ID |
+| `xsec_token` | string | ✅ | 访问令牌 |
+
+</details>
+
+<details>
+<summary><b>9. 点赞/收藏</b></summary>
+
+对笔记进行点赞或收藏操作。
+
+**MCP 工具：**
+- `like_feed` - 点赞/取消点赞
+- `favorite_feed` - 收藏/取消收藏
+
+**参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `feed_id` | string | ✅ | 笔记 ID |
+| `xsec_token` | string | ✅ | 访问令牌 |
+| `unlike`/`unfavorite` | bool | ❌ | 是否取消操作（默认 false） |
+
+</details>
+
+<details>
+<summary><b>10. 发表评论/回复</b></summary>
+
+对笔记发表评论或回复已有评论。
+
+**MCP 工具：**
+- `post_comment` - 发表评论
+- `reply_comment` - 回复评论
+
+**post_comment 参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `feed_id` | string | ✅ | 笔记 ID |
+| `xsec_token` | string | ✅ | 访问令牌 |
+| `content` | string | ✅ | 评论内容 |
+
+**reply_comment 参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `feed_id` | string | ✅ | 笔记 ID |
+| `xsec_token` | string | ✅ | 访问令牌 |
+| `content` | string | ✅ | 回复内容 |
+| `comment_id` | string | ❌ | 目标评论 ID |
+| `user_id` | string | ❌ | 目标用户 ID |
+
+> **注意：** `comment_id` 和 `user_id` 至少需要提供一个
+
+</details>
 
 ## 开发
 
