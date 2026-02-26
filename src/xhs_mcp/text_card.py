@@ -165,7 +165,31 @@ class TextCardAction:
                         logger.info(f"正文已填写，使用选择器: {sel}")
                         break
             
-            # 10. 添加标签（简化版，跳过复杂的标签添加）
+            # 10. 添加标签
+            if tags:
+                logger.info(f"添加标签: {tags}")
+                for tag in tags:
+                    # 点击话题按钮
+                    topic_btn = await page.query_selector("text=# 话题")
+                    if topic_btn:
+                        await topic_btn.click()
+                        await asyncio.sleep(0.5)
+                        
+                        # 在搜索框输入标签
+                        tag_input = await page.query_selector("input[placeholder*='搜索'], input[placeholder*='话题']")
+                        if tag_input:
+                            await tag_input.fill(tag)
+                            await asyncio.sleep(1)
+                            
+                            # 选择第一个搜索结果
+                            first_result = await page.query_selector("[class*='topic-item'], [class*='search-item'], [class*='result-item']")
+                            if first_result:
+                                await first_result.click()
+                                await asyncio.sleep(0.5)
+                            else:
+                                # 按回车确认
+                                await tag_input.press("Enter")
+                                await asyncio.sleep(0.5)
             
             # 11. 点击发布
             logger.info("点击发布按钮...")
