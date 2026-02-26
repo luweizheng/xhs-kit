@@ -172,3 +172,76 @@ class CommentAction(InteractAction):
             return {"feed_id": feed_id, "success": False, "message": str(e)}
         finally:
             await page.close()
+    
+    async def reply_comment(
+        self, 
+        feed_id: str, 
+        xsec_token: str, 
+        content: str,
+        comment_id: Optional[str] = None,
+        user_id: Optional[str] = None
+    ) -> dict:
+        """回复评论
+        
+        Args:
+            feed_id: 笔记 ID
+            xsec_token: 访问令牌
+            content: 回复内容
+            comment_id: 目标评论 ID（可选）
+            user_id: 目标用户 ID（可选）
+        """
+        if not comment_id and not user_id:
+            return {"feed_id": feed_id, "success": False, "message": "缺少 comment_id 或 user_id"}
+        
+        page = await self._prepare_page(feed_id, xsec_token)
+        
+        try:
+            # 等待评论列表加载
+            await asyncio.sleep(2)
+            
+            # 查找目标评论的回复按钮
+            reply_button = None
+            
+            if comment_id:
+                # 通过 comment_id 查找
+                reply_button = page.locator(f"div[data-id='{comment_id}'] .reply-btn").first
+            elif user_id:
+                # 通过 user_id 查找
+                reply_button = page.locator(f"div[data-user-id='{user_id}'] .reply-btn").first
+            
+            # 如果上述方法失败，尝试通过文本查找
+            if not await reply_button.count():
+                reply_buttons = page.locator(".reply-btn, button:has-text('回复')")
+                if await reply_buttons.count() > 0:
+                    reply_button = reply_buttons.first
+            
+            if not await reply_button.count():
+                return {"feed_id": feed_id, "success": False, "message": "未找到回复按钮"}
+            
+            # 点击回复按钮
+            await reply_button.click()
+            await asyncio.sleep(0.5)
+            
+            # 输入回复内容
+            content_input = page.locator("div.input-box div.content-edit p.content-input")
+            await content_input.fill(content)
+            await asyncio.sleep(1)
+            
+            # 点击提交按钮
+            submit_btn = page.locator("div.bottom button.submit")
+            await submit_btn.click()
+            await asyncio.sleep(2)
+            
+            logger.info(f"回复评论成功: {feed_id}, comment_id={comment_id}, user_id={user_id}")
+            return {
+                "feed_id": feed_id, 
+                "success": True, 
+                "message": "回复评论成功",
+                "target_comment_id": comment_id,
+                "target_user_id": user_id
+            }
+        except Exception as e:
+            logger.error(f"回复评论失败: {e}")
+            return {"feed_id": feed_id, "success": False, "message": str(e)}
+        finally:
+            await page.close()

@@ -139,20 +139,36 @@ async def publish_with_video(
 
 
 @mcp.tool()
-async def search_feeds(keyword: str, sort_by: Optional[str] = None, note_type: Optional[str] = None) -> dict:
+async def search_feeds(
+    keyword: str, 
+    sort_by: Optional[str] = None, 
+    note_type: Optional[str] = None,
+    publish_time: Optional[str] = None,
+    search_scope: Optional[str] = None,
+    location: Optional[str] = None
+) -> dict:
     """搜索小红书内容
     
     Args:
         keyword: 搜索关键词
         sort_by: 排序方式（可选）: 综合|最新|最多点赞|最多评论|最多收藏
         note_type: 笔记类型（可选）: 不限|视频|图文
+        publish_time: 发布时间（可选）: 不限|一天内|一周内|半年内
+        search_scope: 搜索范围（可选）: 不限|已看过|未看过|已关注
+        location: 位置距离（可选）: 不限|同城|附近
     """
     from xhs_mcp.models import FilterOption
     
     client = get_client()
     filters = None
-    if sort_by or note_type:
-        filters = FilterOption(sort_by=sort_by, note_type=note_type)
+    if any([sort_by, note_type, publish_time, search_scope, location]):
+        filters = FilterOption(
+            sort_by=sort_by, 
+            note_type=note_type,
+            publish_time=publish_time,
+            search_scope=search_scope,
+            location=location
+        )
     
     result = await client.search(keyword, filters)
     return {
@@ -173,15 +189,43 @@ async def list_feeds() -> dict:
 
 
 @mcp.tool()
-async def get_feed_detail(feed_id: str, xsec_token: str, load_comments: bool = False) -> dict:
+async def get_feed_detail(
+    feed_id: str, 
+    xsec_token: str, 
+    load_comments: bool = False,
+    load_all_comments: bool = False,
+    limit: int = 20,
+    click_more_replies: bool = False,
+    reply_limit: int = 10,
+    scroll_speed: str = "normal"
+) -> dict:
     """获取笔记详情
     
     Args:
         feed_id: 笔记 ID，从搜索或推荐列表获取
         xsec_token: 访问令牌，从搜索或推荐列表获取
-        load_comments: 是否加载评论列表
+        load_comments: 是否加载评论列表（基础模式，仅前10条）
+        load_all_comments: 是否加载全部评论（滚动加载更多）
+        limit: 限制加载的一级评论数量（默认20，仅当load_all_comments为true时生效）
+        click_more_replies: 是否展开二级回复（默认false，仅当load_all_comments为true时生效）
+        reply_limit: 跳过回复数过多的评论（默认10，仅当click_more_replies为true时生效）
+        scroll_speed: 滚动速度（slow|normal|fast，仅当load_all_comments为true时生效）
     """
     client = get_client()
+    
+    # 如果启用了 load_all_comments，传递配置参数
+    if load_all_comments:
+        from xhs_mcp.models import CommentLoadConfig
+        config = CommentLoadConfig(
+            load_all_comments=load_all_comments,
+            limit=limit,
+            click_more_replies=click_more_replies,
+            reply_limit=reply_limit,
+            scroll_speed=scroll_speed
+        )
+        return await client.get_feed_detail_with_config(feed_id, xsec_token, config)
+    
+    # 否则使用基础模式
     return await client.get_feed_detail(feed_id, xsec_token, load_comments)
 
 
@@ -238,6 +282,30 @@ async def post_comment(feed_id: str, xsec_token: str, content: str) -> dict:
     """
     client = get_client()
     return await client.comment(feed_id, xsec_token, content)
+
+
+@mcp.tool()
+async def reply_comment(
+    feed_id: str, 
+    xsec_token: str, 
+    content: str,
+    comment_id: Optional[str] = None,
+    user_id: Optional[str] = None
+) -> dict:
+    """回复笔记下的指定评论
+    
+    Args:
+        feed_id: 笔记 ID
+        xsec_token: 访问令牌
+        content: 回复内容
+        comment_id: 目标评论 ID（可选，从评论列表获取）
+        user_id: 目标用户 ID（可选，从评论列表获取）
+    
+    Note:
+        comment_id 和 user_id 至少需要提供一个
+    """
+    client = get_client()
+    return await client.reply_comment(feed_id, xsec_token, content, comment_id, user_id)
 
 
 @mcp.tool()

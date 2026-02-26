@@ -9,9 +9,9 @@
 
 - 🔐 **扫码登录** - 支持二维码扫码登录，自动保存 cookies
 - 📝 **发布内容** - 支持发布图文、视频、文字配图，支持定时发布
-- 🔍 **搜索内容** - 支持关键词搜索，支持筛选条件
-- ❤️ **互动功能** - 支持点赞、收藏、评论
-- 📊 **数据获取** - 获取首页推荐、笔记详情、用户主页
+- 🔍 **搜索内容** - 支持关键词搜索，支持多维度筛选（排序、类型、时间、范围、位置）
+- ❤️ **互动功能** - 支持点赞、收藏、评论、回复评论
+- 📊 **数据获取** - 获取首页推荐、笔记详情、用户主页，支持高级评论加载配置
 - 🤖 **MCP 协议** - 支持 MCP 协议，可与 AI 助手集成
 
 ## 安装
@@ -53,46 +53,6 @@ xhs-mcp logout
 xhs-mcp serve
 ```
 
-### Python API
-
-```python
-import asyncio
-from xhs_mcp import XhsClient
-
-async def main():
-    # 创建客户端（headless=False 可看到浏览器窗口）
-    async with XhsClient(headless=False) as client:
-        # 扫码登录
-        await client.login()
-        
-        # 检查登录状态
-        if await client.is_logged_in():
-            # 发布图文
-            result = await client.publish(
-                title="我的标题",
-                content="正文内容",
-                images=["./img1.jpg", "./img2.jpg"],
-                tags=["旅行", "美食"]
-            )
-            print(f"发布结果: {result.status}")
-            
-            # 搜索内容
-            feeds = await client.search("Python")
-            for feed in feeds.feeds[:5]:
-                print(f"- {feed.display_title}")
-            
-            # 点赞
-            await client.like(feed_id="xxx", xsec_token="xxx")
-            
-            # 收藏
-            await client.favorite(feed_id="xxx", xsec_token="xxx")
-            
-            # 评论
-            await client.comment(feed_id="xxx", xsec_token="xxx", content="好文章！")
-
-asyncio.run(main())
-```
-
 ## MCP 工具列表
 
 | 工具名 | 说明 |
@@ -109,6 +69,7 @@ asyncio.run(main())
 | `like_feed` | 点赞/取消点赞 |
 | `favorite_feed` | 收藏/取消收藏 |
 | `post_comment` | 发表评论 |
+| `reply_comment` | 回复评论 |
 | `publish_text_card` | 发布文字配图笔记 |
 
 ## MCP 客户端配置
@@ -196,6 +157,7 @@ xhs-mcp serve
 | `favorite(feed_id, xsec_token)` | 收藏 |
 | `unfavorite(feed_id, xsec_token)` | 取消收藏 |
 | `comment(feed_id, xsec_token, content)` | 发表评论 |
+| `reply_comment(feed_id, xsec_token, content, comment_id, user_id)` | 回复评论 |
 
 ## 开发
 

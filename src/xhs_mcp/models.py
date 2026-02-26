@@ -73,3 +73,12 @@ class FilterOption(BaseModel):
     publish_time: Optional[str] = Field(None, description="时间: 不限|一天内|一周内|半年内")
     search_scope: Optional[str] = Field(None, description="范围: 不限|已看过|未看过|已关注")
     location: Optional[str] = Field(None, description="位置: 不限|同城|附近")
+
+
+class CommentLoadConfig(BaseModel):
+    """评论加载配置"""
+    load_all_comments: bool = Field(False, description="是否加载全部评论")
+    limit: int = Field(20, description="限制加载的一级评论数量")
+    click_more_replies: bool = Field(False, description="是否展开二级回复")
+    reply_limit: int = Field(10, description="跳过回复数过多的评论")
+    scroll_speed: str = Field("normal", description="滚动速度: slow|normal|fast")

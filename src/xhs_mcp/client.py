@@ -155,6 +155,16 @@ class XhsClient:
         """
         return await self._feed_detail_action.get_feed_detail(feed_id, xsec_token, load_comments)
     
+    async def get_feed_detail_with_config(self, feed_id: str, xsec_token: str, config) -> dict:
+        """获取笔记详情（带评论加载配置）
+        
+        Args:
+            feed_id: 笔记 ID
+            xsec_token: 访问令牌
+            config: CommentLoadConfig 评论加载配置
+        """
+        return await self._feed_detail_action.get_feed_detail_with_config(feed_id, xsec_token, config)
+    
     async def get_user_profile(self, user_id: str, xsec_token: str) -> dict:
         """获取用户主页
         
@@ -189,6 +199,27 @@ class XhsClient:
             content: 评论内容
         """
         return await self._comment_action.post_comment(feed_id, xsec_token, content)
+    
+    async def reply_comment(
+        self, 
+        feed_id: str, 
+        xsec_token: str, 
+        content: str,
+        comment_id: Optional[str] = None,
+        user_id: Optional[str] = None
+    ) -> dict:
+        """回复评论
+        
+        Args:
+            feed_id: 笔记 ID
+            xsec_token: 访问令牌
+            content: 回复内容
+            comment_id: 目标评论 ID（可选）
+            user_id: 目标用户 ID（可选）
+        """
+        return await self._comment_action.reply_comment(
+            feed_id, xsec_token, content, comment_id, user_id
+        )
     
     async def publish_text_card(
         self,
