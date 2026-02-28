@@ -7,8 +7,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from xhs_mcp.browser import BrowserManager
-from xhs_mcp.models import LoginStatus, LoginQrcodeResponse
+from xhs_kit.po.browser import BrowserManager
+from xhs_kit.po.models import LoginStatus, LoginQrcodeResponse
 
 
 class LoginAction:
@@ -23,7 +23,7 @@ class LoginAction:
     
     def has_cookies(self) -> bool:
         """快速检查是否有 cookies 文件（不打开浏览器）"""
-        from xhs_mcp.cookies import get_cookies_file_path
+        from xhs_kit.po.cookies import get_cookies_file_path
         return get_cookies_file_path().exists()
     
     async def check_login_status(self, quick: bool = False) -> LoginStatus:

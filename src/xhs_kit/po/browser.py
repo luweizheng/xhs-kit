@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from xhs_mcp.cookies import CookieManager
+from xhs_kit.po.cookies import CookieManager
 
 
 class BrowserManager:

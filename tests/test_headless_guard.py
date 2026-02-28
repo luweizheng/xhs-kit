@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from xhs_mcp.browser import BrowserManager
+from xhs_kit.po.browser import BrowserManager
 
 
 def test_non_headless_disallowed_by_default(monkeypatch):

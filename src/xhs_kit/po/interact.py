@@ -8,7 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from xhs_mcp.browser import BrowserManager
+from xhs_kit.po.browser import BrowserManager
 
 
 # 选择器常量

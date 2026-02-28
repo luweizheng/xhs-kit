@@ -3,7 +3,7 @@
 import pytest
 import json
 from pathlib import Path
-from xhs_mcp.cookies import CookieManager
+from xhs_kit.po.cookies import CookieManager
 
 
 def test_save_and_load_cookies(tmp_path):

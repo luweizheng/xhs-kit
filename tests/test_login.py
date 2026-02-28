@@ -12,7 +12,7 @@
 
 import pytest
 import os
-from xhs_mcp.client import XhsClient
+from xhs_kit.po.client import XhsClient
 
 
 class TestLoginStatus:

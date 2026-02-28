@@ -1,6 +1,6 @@
 import pytest
 
-from xhs_mcp.client import XhsClient
+from xhs_kit.po.client import XhsClient
 
 KEYWORD = "Google"
 

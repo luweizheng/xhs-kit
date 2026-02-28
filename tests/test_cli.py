@@ -2,7 +2,7 @@
 
 import pytest
 from click.testing import CliRunner
-from xhs_mcp.cli import main
+from xhs_kit.po.cli import main
 
 
 @pytest.fixture

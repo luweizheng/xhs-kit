@@ -8,11 +8,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from xhs_mcp.browser import BrowserManager
-from xhs_mcp.interact import make_feed_detail_url
+from xhs_kit.po.browser import BrowserManager
+from xhs_kit.po.interact import make_feed_detail_url
 
 if TYPE_CHECKING:
-    from xhs_mcp.models import CommentLoadConfig
+    from xhs_kit.po.models import CommentLoadConfig
 
 
 class FeedDetailAction:

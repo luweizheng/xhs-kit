@@ -1,8 +1,8 @@
 """发布功能测试"""
 
 import pytest
-from xhs_mcp.client import XhsClient
-from xhs_mcp.models import PublishImageContent
+from xhs_kit.po.client import XhsClient
+from xhs_kit.po.models import PublishImageContent
 
 
 @pytest.mark.skip(reason="需要登录后手动测试")

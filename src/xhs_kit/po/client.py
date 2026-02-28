@@ -2,17 +2,18 @@
 
 from typing import Optional
 from datetime import datetime
+import time
 
-from xhs_mcp.browser import BrowserManager
-from xhs_mcp.login import LoginAction
-from xhs_mcp.publish import PublishAction
-from xhs_mcp.search import SearchAction
-from xhs_mcp.feeds import FeedsListAction
-from xhs_mcp.feed_detail import FeedDetailAction
-from xhs_mcp.user_profile import UserProfileAction
-from xhs_mcp.interact import LikeAction, FavoriteAction, CommentAction
-from xhs_mcp.text_card import TextCardAction
-from xhs_mcp.models import (
+from xhs_kit.po.browser import BrowserManager
+from xhs_kit.po.login import LoginAction
+from xhs_kit.po.publish import PublishAction
+from xhs_kit.po.search import SearchAction
+from xhs_kit.po.feeds import FeedsListAction
+from xhs_kit.po.feed_detail import FeedDetailAction
+from xhs_kit.po.user_profile import UserProfileAction
+from xhs_kit.po.interact import LikeAction, FavoriteAction, CommentAction
+from xhs_kit.po.text_card import TextCardAction
+from xhs_kit.po.models import (
     LoginStatus,
     LoginQrcodeResponse,
     PublishImageContent,
@@ -50,6 +51,9 @@ class XhsClient:
         self._favorite_action: Optional[FavoriteAction] = None
         self._comment_action: Optional[CommentAction] = None
         self._text_card_action: Optional[TextCardAction] = None
+
+        self._login_verify_cache_at: Optional[float] = None
+        self._login_verify_cache_ok: Optional[bool] = None
     
     def _ensure_browser(self) -> BrowserManager:
         """确保浏览器已初始化（延迟加载）"""
@@ -81,8 +85,8 @@ class XhsClient:
         """
         if quick:
             # quick 模式下不初始化 browser，直接检查 cookies 文件
-            from xhs_mcp.cookies import get_cookies_file_path
-            from xhs_mcp.models import LoginStatus
+            from xhs_kit.po.cookies import get_cookies_file_path
+            from xhs_kit.po.models import LoginStatus
             has_cookies = get_cookies_file_path().exists()
             return LoginStatus(is_logged_in=has_cookies, user_info=None)
         # 非 quick 模式需要 browser
@@ -98,9 +102,33 @@ class XhsClient:
         status = await self.check_login_status(quick=quick)
         return status.is_logged_in
 
+    async def verify_login(self, ttl_seconds: int = 0, force: bool = False) -> bool:
+        """验证登录状态（会打开 headless 浏览器检查 DOM）
+
+        Args:
+            ttl_seconds: 缓存有效期（秒）。为 0 表示不缓存。
+            force: 为 True 时忽略缓存，强制重新验证。
+        """
+        now = time.time()
+        if (
+            not force
+            and ttl_seconds > 0
+            and self._login_verify_cache_at is not None
+            and self._login_verify_cache_ok is not None
+            and (now - self._login_verify_cache_at) < ttl_seconds
+        ):
+            return self._login_verify_cache_ok
+
+        status = await self.check_login_status(quick=False)
+        ok = bool(status.is_logged_in)
+        if ttl_seconds > 0:
+            self._login_verify_cache_at = now
+            self._login_verify_cache_ok = ok
+        return ok
+
     def has_cookies(self) -> bool:
         """快速检查是否有 cookies 文件（同步方法，不打开浏览器）"""
-        from xhs_mcp.cookies import get_cookies_file_path
+        from xhs_kit.po.cookies import get_cookies_file_path
         return get_cookies_file_path().exists()
 
     async def get_login_qrcode(self) -> LoginQrcodeResponse:
@@ -126,7 +154,7 @@ class XhsClient:
             self._browser.delete_cookies()
         else:
             # 即使没有初始化 browser 也能删除 cookies
-            from xhs_mcp.cookies import get_cookies_file_path
+            from xhs_kit.po.cookies import get_cookies_file_path
             cookies_file = get_cookies_file_path()
             if cookies_file.exists():
                 cookies_file.unlink()

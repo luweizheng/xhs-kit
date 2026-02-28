@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "xhs-mcp-py"
-version = "0.2.0"
-description = "小红书 MCP 工具 - 支持登录、发布图文/视频、点赞评论等功能"
+name = "xhs-kit"
+version = "0.1.0"
+description = "小红书自动化工具箱 - 覆盖内容生产、发布、运营全流程"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -40,17 +40,17 @@ dev = [
 ]
 
 [project.scripts]
-xhs-mcp = "xhs_mcp.cli:main"
+xhs-kit = "xhs_kit.po.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/luweizheng/xhs-mcp-py"
-Repository = "https://github.com/luweizheng/xhs-mcp-py"
+Homepage = "https://github.com/luweizheng/xhs-kit"
+Repository = "https://github.com/luweizheng/xhs-kit"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/xhs_mcp"]
+packages = ["src/xhs_kit"]
 
 [tool.hatch.build.targets.editable]
-packages = ["src/xhs_mcp"]
+packages = ["src/xhs_kit"]
 
 [tool.hatch.build]
 sources = ["src"]

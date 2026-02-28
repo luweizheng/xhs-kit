@@ -16,7 +16,7 @@ def main():
 @main.command()
 def login_browser():
     """通过浏览器扫码登录小红书（会打开浏览器窗口）"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     import os
     
     async def _login():
@@ -35,20 +35,36 @@ def login_browser():
 
 
 @main.command()
-def status():
+@click.option("--verify", is_flag=True, default=False, help="使用 headless 浏览器真实验证登录状态")
+@click.option("--ttl", type=int, default=0, help="verify 结果缓存秒数（0 表示不缓存）")
+def status(verify: bool, ttl: int):
     """检查登录状态"""
-    from xhs_mcp.cookies import get_cookies_file_path
+    from xhs_kit.po.cookies import get_cookies_file_path
 
-    if get_cookies_file_path().exists():
-        click.echo("✅ 已登录")
+    if not verify:
+        if get_cookies_file_path().exists():
+            click.echo("✅ 已登录（quick：检测到 cookies 文件）")
+        else:
+            click.echo("❌ 未登录（quick：未检测到 cookies 文件）")
+        return
+
+    from xhs_kit.po.client import XhsClient
+
+    async def _verify():
+        async with XhsClient(headless=True) as client:
+            return await client.verify_login(ttl_seconds=max(ttl, 0))
+
+    ok = asyncio.run(_verify())
+    if ok:
+        click.echo("✅ 已登录（verify：已通过页面验证）")
     else:
-        click.echo("❌ 未登录")
+        click.echo("❌ 未登录（verify：页面验证失败，cookies 可能过期/风控）")
 
 
 @main.command()
 def logout():
     """退出登录（删除 cookies）"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     client = XhsClient()
     client.delete_cookies()
@@ -67,11 +83,11 @@ def login_qrcode(save: str, terminal: bool):
     import base64
     import io
     import sys
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     async def _login_qrcode():
-        from xhs_mcp.browser import BrowserManager
-        from xhs_mcp.login import LoginAction
+        from xhs_kit.po.browser import BrowserManager
+        from xhs_kit.po.login import LoginAction
         
         browser = BrowserManager(headless=True)
         login_action = LoginAction(browser)
@@ -266,7 +282,7 @@ def login_qrcode(save: str, terminal: bool):
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def publish(title: str, content: str, image: tuple, tag: tuple, headless: bool):
     """发布图文内容"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     async def _publish():
         async with XhsClient(headless=headless) as client:
@@ -294,7 +310,7 @@ def publish(title: str, content: str, image: tuple, tag: tuple, headless: bool):
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def publish_video(title: str, content: str, video: str, tag: tuple, headless: bool):
     """发布视频内容"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     async def _publish():
         async with XhsClient(headless=headless) as client:
@@ -319,7 +335,7 @@ def publish_video(title: str, content: str, video: str, tag: tuple, headless: bo
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def search(keyword: str, headless: bool):
     """搜索小红书内容"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     async def _search():
         async with XhsClient(headless=headless) as client:
@@ -343,7 +359,7 @@ def search(keyword: str, headless: bool):
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def like(feed_id: str, xsec_token: str, unlike: bool, headless: bool):
     """点赞或取消点赞笔记"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
 
     async def _like():
         async with XhsClient(headless=headless) as client:
@@ -371,7 +387,7 @@ def like(feed_id: str, xsec_token: str, unlike: bool, headless: bool):
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def favorite(feed_id: str, xsec_token: str, unfavorite: bool, headless: bool):
     """收藏或取消收藏笔记"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
 
     async def _favorite():
         async with XhsClient(headless=headless) as client:
@@ -399,7 +415,7 @@ def favorite(feed_id: str, xsec_token: str, unfavorite: bool, headless: bool):
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def comment_cmd(feed_id: str, xsec_token: str, content: str, headless: bool):
     """发表评论"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
 
     async def _comment():
         async with XhsClient(headless=headless) as client:
@@ -432,7 +448,7 @@ def reply_comment_cmd(
     headless: bool,
 ):
     """回复评论"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
 
     if not comment_id and not user_id:
         raise click.UsageError("--comment-id 和 --user-id 至少需要提供一个")
@@ -462,7 +478,7 @@ def reply_comment_cmd(
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def publish_text_card(cover: str, page: tuple, style: str, title: str, content: str, tag: tuple, headless: bool):
     """发布文字配图笔记"""
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     async def _publish():
         async with XhsClient(headless=headless) as client:
@@ -486,9 +502,71 @@ def publish_text_card(cover: str, page: tuple, style: str, title: str, content: 
 
 @main.command()
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
+def list_feeds(headless: bool):
+    """获取首页推荐列表"""
+    from xhs_kit.po.client import XhsClient
+    import json
+    
+    async def _list():
+        async with XhsClient(headless=headless) as client:
+            if not await client.is_logged_in(quick=True):
+                click.echo("❌ 请先登录")
+                return
+            
+            result = await client.list_feeds()
+            click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+    
+    asyncio.run(_list())
+
+
+@main.command()
+@click.option("--feed-id", required=True, help="笔记 ID")
+@click.option("--xsec-token", required=True, help="访问令牌")
+@click.option("--load-comments", is_flag=True, default=False, help="是否加载评论")
+@click.option("--headless/--no-headless", default=True, help="是否无头模式")
+def detail(feed_id: str, xsec_token: str, load_comments: bool, headless: bool):
+    """获取笔记详情"""
+    from xhs_kit.po.client import XhsClient
+    import json
+    
+    async def _detail():
+        async with XhsClient(headless=headless) as client:
+            if not await client.is_logged_in(quick=True):
+                click.echo("❌ 请先登录")
+                return
+            
+            result = await client.get_feed_detail(feed_id, xsec_token, load_comments)
+            click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+    
+    asyncio.run(_detail())
+
+
+@main.command()
+@click.option("--user-id", required=True, help="用户 ID")
+@click.option("--xsec-token", required=True, help="访问令牌")
+@click.option("--headless/--no-headless", default=True, help="是否无头模式")
+def user_profile(user_id: str, xsec_token: str, headless: bool):
+    """获取用户主页信息"""
+    from xhs_kit.po.client import XhsClient
+    import json
+    
+    async def _profile():
+        async with XhsClient(headless=headless) as client:
+            if not await client.is_logged_in(quick=True):
+                click.echo("❌ 请先登录")
+                return
+            
+            result = await client.get_user_profile(user_id, xsec_token)
+            click.echo(json.dumps(result, ensure_ascii=False, indent=2))
+    
+    asyncio.run(_profile())
+
+
+@main.command()
+@click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def serve(headless: bool):
     """启动 MCP 服务（stdio 模式）"""
-    from xhs_mcp.mcp_server import run_server
+    from xhs_kit.po.mcp_server import run_server
     run_server(headless=headless)
 
 

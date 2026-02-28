@@ -1,8 +1,8 @@
-# xhs-mcp-py 项目说明
+# xhs-kit 项目说明
 
 ## 项目概述
 
-xhs-mcp-py 是一个小红书自动化工具，基于 Playwright 浏览器自动化框架实现，支持通过 MCP 协议与 AI 助手集成。
+xhs-kit 是一个小红书自动化工具，基于 Playwright 浏览器自动化框架实现，支持通过 MCP 协议与 AI 助手集成。
 
 **核心功能：**
 - 扫码登录（浏览器/二维码两种模式）
@@ -23,7 +23,7 @@ xhs-mcp-py 是一个小红书自动化工具，基于 Playwright 浏览器自动
 - 模拟真实用户操作（点击、输入、滚动等）
 - 拦截和分析网络请求，获取 API 数据
 
-核心文件：`src/xhs_mcp/browser.py`
+核心文件：`src/xhs_kit.po/browser.py`
 
 ### 2. 登录机制
 
@@ -39,7 +39,7 @@ xhs-mcp-py 是一个小红书自动化工具，基于 Playwright 浏览器自动
 - 支持保存二维码图片
 - 轮询检测登录状态
 
-核心文件：`src/xhs_mcp/login.py`、`src/xhs_mcp/cookies.py`
+核心文件：`src/xhs_kit.po/login.py`、`src/xhs_kit.po/cookies.py`
 
 ### 3. 内容发布
 
@@ -53,7 +53,7 @@ xhs-mcp-py 是一个小红书自动化工具，基于 Playwright 浏览器自动
 - 使用小红书自带的文字生图将文字渲染为卡片
 - 支持多页、多种样式（基础、边框、手写等）
 
-核心文件：`src/xhs_mcp/publish.py`、`src/xhs_mcp/text_card.py`
+核心文件：`src/xhs_kit.po/publish.py`、`src/xhs_kit.po/text_card.py`
 
 ### 4. 数据获取
 
@@ -66,7 +66,7 @@ xhs-mcp-py 是一个小红书自动化工具，基于 Playwright 浏览器自动
 - 直接访问笔记/用户页面 URL
 - 监听 API 响应获取结构化数据
 
-核心文件：`src/xhs_mcp/search.py`、`src/xhs_mcp/feeds.py`、`src/xhs_mcp/feed_detail.py`
+核心文件：`src/xhs_kit.po/search.py`、`src/xhs_kit.po/feeds.py`、`src/xhs_kit.po/feed_detail.py`
 
 ### 5. MCP 协议集成
 
@@ -88,13 +88,13 @@ MCP Server (stdio 模式)
   └── post_comment / reply_comment
 ```
 
-核心文件：`src/xhs_mcp/mcp_server.py`
+核心文件：`src/xhs_kit.po/mcp_server.py`
 
 ### 6. CLI 封装
 
-提供命令行接口 `xhs-mcp`，支持所有 MCP 工具的对应命令：
+提供命令行接口 `xhs-kit`，支持所有 MCP 工具的对应命令：
 
-核心文件：`src/xhs_mcp/cli.py`
+核心文件：`src/xhs_kit.po/cli.py`
 
 ---
 
@@ -122,7 +122,7 @@ MCP Server (stdio 模式)
 ### 代码结构
 
 ```
-src/xhs_mcp/
+src/xhs_kit.po/
 ├── browser.py        # Playwright 浏览器封装
 ├── cookies.py        # Cookies 管理
 ├── login.py          # 登录逻辑（浏览器/二维码）

@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from xhs_mcp.client import XhsClient
+from xhs_kit.po.client import XhsClient
 
 
 def print_qrcode_to_terminal(img_base64: str) -> str:
@@ -108,7 +108,7 @@ def get_client() -> XhsClient:
 @mcp.tool()
 async def check_login_status() -> dict:
     """检查小红书登录状态（只检查 cookies 文件是否存在）"""
-    from xhs_mcp.cookies import get_cookies_file_path
+    from xhs_kit.po.cookies import get_cookies_file_path
     has_cookies = get_cookies_file_path().exists()
     return {
         "is_logged_in": has_cookies,
@@ -123,7 +123,7 @@ async def login_with_browser() -> dict:
     注意：在 Claude Code 中，推荐使用命令行登录：xhs-mcp login-qrcode --terminal
     """
     # 先检查是否已有 cookies
-    from xhs_mcp.cookies import get_cookies_file_path
+    from xhs_kit.po.cookies import get_cookies_file_path
     if get_cookies_file_path().exists():
         return {
             "is_logged_in": True,
@@ -131,7 +131,7 @@ async def login_with_browser() -> dict:
         }
     
     # 使用非 headless 模式的客户端
-    from xhs_mcp.client import XhsClient
+    from xhs_kit.po.client import XhsClient
     
     async with XhsClient(headless=False) as client:
         success = await client.login()
@@ -266,7 +266,7 @@ async def search_feeds(
         search_scope: 搜索范围（可选）: 不限|已看过|未看过|已关注
         location: 位置距离（可选）: 不限|同城|附近
     """
-    from xhs_mcp.models import FilterOption
+    from xhs_kit.po.models import FilterOption
     
     client = get_client()
     filters = None
@@ -324,7 +324,7 @@ async def get_feed_detail(
     
     # 如果启用了 load_all_comments，传递配置参数
     if load_all_comments:
-        from xhs_mcp.models import CommentLoadConfig
+        from xhs_kit.po.models import CommentLoadConfig
         config = CommentLoadConfig(
             load_all_comments=load_all_comments,
             limit=limit,

@@ -11,7 +11,7 @@ class TestCheckLoginStatus:
     @pytest.mark.asyncio
     async def test_check_login_status_logged_in(self, tmp_path, monkeypatch):
         """测试已登录状态"""
-        from xhs_mcp.mcp_server import check_login_status
+        from xhs_kit.po.mcp_server import check_login_status
 
         cookies_file = tmp_path / "cookies.json"
         cookies_file.write_text("[]")
@@ -25,7 +25,7 @@ class TestCheckLoginStatus:
     @pytest.mark.asyncio
     async def test_check_login_status_not_logged_in(self, tmp_path, monkeypatch):
         """测试未登录状态"""
-        from xhs_mcp.mcp_server import check_login_status
+        from xhs_kit.po.mcp_server import check_login_status
 
         cookies_file = tmp_path / "cookies.json"
         monkeypatch.setenv("COOKIES_PATH", str(cookies_file))
@@ -42,7 +42,7 @@ class TestLoginWithBrowser:
     @pytest.mark.asyncio
     async def test_login_with_browser(self):
         """测试浏览器登录（需要手动测试）"""
-        from xhs_mcp.mcp_server import login_with_browser
+        from xhs_kit.po.mcp_server import login_with_browser
         result = await login_with_browser()
         assert "is_logged_in" in result
         assert "message" in result
@@ -54,7 +54,7 @@ class TestGetLoginQrcode:
     @pytest.mark.asyncio
     async def test_get_login_qrcode(self):
         """测试获取二维码"""
-        from xhs_mcp.mcp_server import get_login_qrcode
+        from xhs_kit.po.mcp_server import get_login_qrcode
         
         with patch('xhs_mcp.mcp_server.get_client') as mock_get_client:
             mock_client = AsyncMock()
@@ -78,7 +78,7 @@ class TestDeleteCookies:
     @pytest.mark.asyncio
     async def test_delete_cookies(self):
         """测试删除 cookies"""
-        from xhs_mcp.mcp_server import delete_cookies
+        from xhs_kit.po.mcp_server import delete_cookies
         
         with patch('xhs_mcp.mcp_server.get_client') as mock_get_client:
             mock_client = MagicMock()

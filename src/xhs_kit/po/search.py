@@ -9,8 +9,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from xhs_mcp.browser import BrowserManager
-from xhs_mcp.models import Feed, FeedsListResponse, FilterOption
+from xhs_kit.po.browser import BrowserManager
+from xhs_kit.po.models import Feed, FeedsListResponse, FilterOption
 
 
 class SearchAction:
