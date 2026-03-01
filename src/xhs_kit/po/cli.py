@@ -563,6 +563,58 @@ def user_profile(user_id: str, xsec_token: str, headless: bool):
 
 
 @main.command()
+@click.option("--title", "-t", required=True, help="文字标题")
+@click.option("--content", "-c", required=True, help="文字正文内容")
+@click.option("--image", "-i", multiple=True, required=True, help="图片路径（可多次指定）")
+@click.option("--tag", multiple=True, help="话题标签（可多次指定）")
+@click.option("--verbose", "-v", is_flag=True, help="显示详细信息（错误、警告、图片详情等）")
+def debug_publish(title: str, content: str, image: tuple, tag: tuple, verbose: bool):
+    """Debug 模式：验证发布内容而不实际发布
+    
+    用于测试 agentic workflow，验证参数格式、图片存在性、分辨率等。
+    不会打开浏览器，不会实际发布到小红书。
+    """
+    from xhs_kit.po.validator import ContentValidator
+    import json
+    
+    validation_result = ContentValidator.validate_publish_content(
+        title=title,
+        content=content,
+        images=list(image),
+        tags=list(tag) if tag else None
+    )
+    result = validation_result.to_dict()
+    
+    # 非 verbose 模式：只输出验证结果
+    if not verbose:
+        if result["is_valid"]:
+            click.echo("✅ 验证通过")
+        else:
+            click.echo("❌ 验证失败")
+        return
+    
+    # Verbose 模式：输出详细信息
+    if result["is_valid"]:
+        click.echo("✅ 验证通过")
+    else:
+        click.echo("❌ 验证失败")
+    
+    if result["errors"]:
+        click.echo("\n错误:")
+        for error in result["errors"]:
+            click.echo(f"  • {error}")
+    
+    if result["warnings"]:
+        click.echo("\n警告:")
+        for warning in result["warnings"]:
+            click.echo(f"  ⚠ {warning}")
+    
+    if result["info"]:
+        click.echo("\n详细信息:")
+        click.echo(json.dumps(result["info"], ensure_ascii=False, indent=2))
+
+
+@main.command()
 @click.option("--headless/--no-headless", default=True, help="是否无头模式")
 def serve(headless: bool):
     """启动 MCP 服务（stdio 模式）"""

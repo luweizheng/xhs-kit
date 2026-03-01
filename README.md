@@ -203,6 +203,13 @@ xhs-kit comment --feed-id FEED_ID --xsec-token XSEC_TOKEN -c "评论内容"
 # 回复评论
 xhs-kit reply-comment --feed-id FEED_ID --xsec-token XSEC_TOKEN -c "回复内容" --comment-id COMMENT_ID
 
+# Debug 模式：验证发布内容（不实际发布）
+# 用于测试 agentic workflow，验证参数格式、图片存在性、分辨率等
+xhs-kit debug-publish -t "标题" -c "内容" -i image1.jpg -i image2.jpg --tag "标签1" --tag "标签2"
+
+# 使用 --verbose/-v 显示详细信息（错误、警告、图片详情）
+xhs-kit debug-publish -t "标题" -c "内容" -i image1.jpg --verbose
+
 # 退出登录
 xhs-kit logout
 
@@ -229,6 +236,7 @@ xhs-kit serve
 | `favorite_feed` | 收藏/取消收藏 |
 | `post_comment` | 发表评论 |
 | `reply_comment` | 回复评论 |
+| `debug_publish_content` | **Debug 模式** - 验证发布内容而不实际发布（用于测试 workflow）|
 
 ## API 参考
 
@@ -446,6 +454,80 @@ xhs-kit search -k "关键词"
 | `user_id` | string | ❌ | 目标用户 ID |
 
 > **注意：** `comment_id` 和 `user_id` 至少需要提供一个
+
+</details>
+
+<details>
+<summary><b>9. Debug 模式：验证发布内容</b></summary>
+
+用于测试 agentic workflow，验证参数格式、图片存在性、分辨率等，**不会实际发布到小红书**。
+
+**MCP 工具：**
+- `debug_publish_content` - 验证发布内容
+
+**命令行：**
+```bash
+# 简洁模式（默认）：只显示验证结果
+xhs-kit debug-publish -t "标题" -c "内容" -i image1.jpg -i image2.jpg --tag "标签1"
+
+# Verbose 模式：显示详细信息（错误、警告、图片详情等）
+xhs-kit debug-publish -t "标题" -c "内容" -i image1.jpg --verbose
+# 或使用短选项
+xhs-kit debug-publish -t "标题" -c "内容" -i image1.jpg -v
+```
+
+**输出示例：**
+
+简洁模式：
+```
+✅ 验证通过
+```
+
+Verbose 模式：
+```
+✅ 验证通过
+
+详细信息:
+{
+  "title_length": 4,
+  "content_length": 6,
+  "total_images": 2,
+  "valid_images": 2,
+  "image_details": [...]
+}
+```
+
+**验证内容：**
+- ✅ 标题长度（最多 20 字符）
+- ✅ 图片文件是否存在
+- ✅ 图片格式是否支持（jpg/png/webp/heic）
+- ✅ 图片分辨率（建议至少 480x480）
+- ✅ 图片大小（建议 20MB 以内）
+- ✅ 标签数量和长度
+
+**返回结果：**
+```json
+{
+  "is_valid": true,
+  "errors": [],
+  "warnings": [],
+  "info": {
+    "title_length": 4,
+    "content_length": 6,
+    "total_images": 2,
+    "valid_images": 2,
+    "image_details": [...]
+  }
+}
+```
+
+**debug_publish_content 参数：**
+| 参数 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| `title` | string | ✅ | 文字标题 |
+| `content` | string | ✅ | 文字正文内容 |
+| `images` | list[string] | ✅ | 图片路径列表 |
+| `tags` | list[string] | ❌ | 标签列表 |
 
 </details>
 

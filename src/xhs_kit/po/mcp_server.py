@@ -451,6 +451,36 @@ async def publish_text_card(
     }
 
 
+@mcp.tool()
+async def debug_publish_content(
+    title: str,
+    content: str,
+    images: list[str],
+    tags: Optional[list[str]] = None
+) -> dict:
+    """Debug 模式：验证发布内容而不实际发布
+    
+    用于测试 agentic workflow，验证参数格式、图片存在性、分辨率等。
+    不会打开浏览器，不会实际发布到小红书。
+    
+    Args:
+        title: 文字标题（最多20个字）
+        content: 文字正文内容
+        images: 图片文件路径列表
+        tags: 标签列表（可选）
+        
+    Returns:
+        dict: 验证结果，包含 is_valid, errors, warnings, info
+    """
+    client = get_client()
+    return client.debug_publish(
+        title=title,
+        content=content,
+        images=images,
+        tags=tags
+    )
+
+
 def init_server(headless: bool = True):
     """初始化服务器"""
     global _headless
