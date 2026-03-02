@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xhs-kit"
-version = "0.1.2"
+version = "0.1.3"
 description = "小红书自动化工具箱 - 覆盖内容生产、发布、运营全流程"
 readme = "README.md"
 license = "MIT"
@@ -47,10 +47,10 @@ Homepage = "https://github.com/luweizheng/xhs-kit"
 Repository = "https://github.com/luweizheng/xhs-kit"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/xhs_kit"]
+packages = ["xhs_kit"]
 
 [tool.hatch.build.targets.editable]
-packages = ["src/xhs_kit"]
+packages = ["xhs_kit"]
 
 [tool.hatch.build]
 sources = ["src"]
